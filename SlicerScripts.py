@@ -93,3 +93,8 @@ for i in range(N):
   distance = numpy.linalg.norm(pointA_ref - pointB_RAS)
   average = average + (distance - average) / numbersSoFar
 
+
+print "The average distance is " + average
+
+
+
