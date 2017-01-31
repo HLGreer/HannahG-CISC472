@@ -3,6 +3,7 @@ import unittest
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
+import numpy
 
 #
 # HannahG
@@ -255,8 +256,89 @@ class HannahGTest(ScriptedLoadableModuleTest):
   def test_HannahG1(self):
     print "Hannah"
 
+    Scale = 30.0
+    numPerEdge = 3
+    Sigma = 2.0 # radius of random error
+    N = 10
+
+    fromNormCoordinates = numpy.random.rand(N, 3) # An array of random numbers
+    noise = numpy.random.normal(0.0, Sigma, N*3)
+
+    # Homework for Jan 24:
     referenceToRas = slicer.vtkMRMLLinearTransformNode()
     slicer.mrmlScene.AddNode(referenceToRas)
     referenceToRas.SetName('ReferenceToRas')
+
+
+    referenceFids = slicer.vtkMRMLMarkupsFiducialNode()
+    referenceFids.SetName('ReferenceFiducials')
+    slicer.mrmlScene.AddNode(referenceFids)
+    RASFids = slicer.vtkMRMLMarkupsFiducialNode()
+    RASFids.SetName('RASFiducials')
+    slicer.mrmlScene.AddNode(RASFids)
+
+    alphaPoints = vtk.vtkPoints()
+    betaPoints = vtk.vtkPoints()
+
+    for i in range(N):
+      x = (fromNormCoordinates[i, 0] - 0.5) * Scale
+      y = (fromNormCoordinates[i, 1] - 0.5) * Scale
+      z = (fromNormCoordinates[i, 2] - 0.5) * Scale
+      numFids = referenceFids.AddFiducial(x, y, z)
+      numPoints = alphaPoints.InsertNextPoint(x, y, z)
+      xx = x+noise[i*3]
+      yy = y+noise[i*3+1]
+      zz = z+noise[i*3+2]
+      numFids = RASFids.AddFiducial(xx, yy, zz)
+      numPoints = betaPoints.InsertNextPoint(xx, yy, zz)
+
+    # Create landmark transform object that computes registration
+
+    landmarkTransform = vtk.vtkLandmarkTransform()
+    landmarkTransform.SetSourceLandmarks( alphaPoints )
+    landmarkTransform.SetTargetLandmarks( betaPoints )
+    landmarkTransform.SetModeToRigidBody()
+    landmarkTransform.Update()
+
+    alphaToBetaMatrix = vtk.vtkMatrix4x4()
+    landmarkTransform.GetMatrix( alphaToBetaMatrix )
+
+    det = alphaToBetaMatrix.Determinant()
+    if det < 1e-8:
+      print 'Unstable registration. Check input for collinear points.'
+
+    referenceToRas.SetMatrixTransformToParent(alphaToBetaMatrix)
+
+    # Compute average point distance after registration
+
+    average = 0.0
+    numbersSoFar = 0
+
+    for i in range(N):
+      numbersSoFar = numbersSoFar + 1
+      a = alphaPoints.GetPoint(i)
+      pointA_Alpha = numpy.array(a)
+      pointA_Alpha = numpy.append(pointA_Alpha, 1)
+      pointA_Beta = alphaToBetaMatrix.MultiplyFloatPoint(pointA_Alpha)
+      b = betaPoints.GetPoint(i)
+      pointB_Beta = numpy.array(b)
+      pointB_Beta = numpy.append(pointB_Beta, 1)
+      distance = numpy.linalg.norm(pointA_Beta - pointB_Beta)
+      average = average + (distance - average) / numbersSoFar
+
+    print "Average distance after registration: " + str(average)
+
+    # from Jan 26
+    createModelsLogic = slicer.modules.createmodels.logic()
+
+    refModelNode = createModelsLogic.CreateCoordinate(20, 2)
+    refModelNode.SetName('ReferenceModel')
+    refModelNode.GetDisplayNode().SetColor(1,0,0)
+
+    RASModelNode = createModelsLogic.CreateCoordinate(20, 2)
+    RASModelNode.SetName('RASModel')
+    RASModelNode.GetDisplayNode().SetColor(0, 0, 1)
+
+    RefToRasTransform = referenceToRas.GetTransformToParent()
 
 
