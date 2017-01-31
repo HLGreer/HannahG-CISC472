@@ -78,6 +78,19 @@ for i in range(N):
 print "Average distance after registration: " + str(average)
 
 
+createModelsLogic = slicer.modules.createmodels.logic()
+
+refModelNode = createModelsLogic.CreateCoordinate(20, 2)
+refModelNode.SetName('ReferenceModel')
+refModelNode.GetDisplayNode().SetColor(1,0,0)
+
+RASModelNode = createModelsLogic.CreateCoordinate(20, 2)
+RASModelNode.SetName('RASModel')
+RASModelNode.GetDisplayNode().SetColor(0, 0, 1)
+
+RefToRasTransform = referenceToRas.GetTransformToParent()
+
+
 
 
 
