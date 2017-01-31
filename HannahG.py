@@ -254,3 +254,9 @@ class HannahGTest(ScriptedLoadableModuleTest):
 
   def test_HannahG1(self):
     print "Hannah"
+
+    referenceToRas = slicer.vtkMRMLLinearTransformNode()
+    slicer.mrmlScene.AddNode(referenceToRas)
+    referenceToRas.SetName('ReferenceToRas')
+
+
