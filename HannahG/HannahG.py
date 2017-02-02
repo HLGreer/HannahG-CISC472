@@ -273,8 +273,10 @@ class HannahGTest(ScriptedLoadableModuleTest):
     referenceFids = slicer.vtkMRMLMarkupsFiducialNode()
     referenceFids.SetName('ReferenceFiducials')
     slicer.mrmlScene.AddNode(referenceFids)
+    referenceFids.GetDisplayNode().SetSelectedColor(0,0,1)
     RASFids = slicer.vtkMRMLMarkupsFiducialNode()
     RASFids.SetName('RASFiducials')
+    RASFids.GetDisplayNode().SetSelectedColor(1,1,0)
     slicer.mrmlScene.AddNode(RASFids)
 
     alphaPoints = vtk.vtkPoints()
