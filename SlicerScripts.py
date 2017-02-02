@@ -22,9 +22,11 @@ referenceToRas.SetName('ReferenceToRas')
 referenceFids = slicer.vtkMRMLMarkupsFiducialNode()
 referenceFids.SetName('ReferenceFiducials')
 slicer.mrmlScene.AddNode(referenceFids)
+referenceFids.GetDisplayNode().SetSelectedColor(0, 0, 1)
 RASFids = slicer.vtkMRMLMarkupsFiducialNode()
 RASFids.SetName('RASFiducials')
 slicer.mrmlScene.AddNode(RASFids)
+RASFids.GetDisplayNode().SetSelectedColor(1, 1, 0)
 
 alphaPoints = vtk.vtkPoints()
 betaPoints = vtk.vtkPoints()
@@ -78,17 +80,21 @@ for i in range(N):
 print "Average distance after registration: " + str(average)
 
 
-createModelsLogic = slicer.modules.createmodels.logic()
+# For Feb 2nd:
 
-refModelNode = createModelsLogic.CreateCoordinate(20, 2)
-refModelNode.SetName('ReferenceModel')
-refModelNode.GetDisplayNode().SetColor(1,0,0)
+# Compute Target Registration Error:
+    # Target registration error (TRE), which is the distance, after registration,
+    # between a pair of corresponding points which are not used in registration.
+    # (From http://www.cse.yorku.ca/~burton/publications/A%20theoretical%20comparison%20of%20different%20target%20registration%20error%20estimators.pdf)
 
-RASModelNode = createModelsLogic.CreateCoordinate(20, 2)
-RASModelNode.SetName('RASModel')
-RASModelNode.GetDisplayNode().SetColor(0, 0, 1)
+    # Transform the point (0,0,0) with the transform and return the distance between the original and the transformed
+    # point as the TRE
+targetPoint = numpy.array((0,0,0,1))
+transformedTarget = alphaToBetaMatrix.MultiplyFloatPoint(targetPoint)
+TRE = numpy.linalg.norm(transformedTarget - targetPoint)
+print "The Target Registration Error is: "
+print TRE
 
-RefToRasTransform = referenceToRas.GetTransformToParent()
 
 
 
