@@ -8,7 +8,6 @@ import numpy
 
 def createTransformPoints(randErr, N):
   Scale = 30.0
-  numPerEdge = 3
   Sigma = randErr # radius of random error
 
   fromNormCoordinates = numpy.random.rand(N, 3) # An array of random numbers
@@ -82,7 +81,7 @@ def avgDistAfterReg(N, alphaPoints, betaPoints, alphaToBetaMatrix):
     average = average + (distance - average) / numbersSoFar
 
   print "Average distance after registration: " + str(average)
-  return
+  return average
 
 
 # For Feb 2nd:
@@ -101,6 +100,16 @@ def computeTRE(alphaToBetaMatrix):
   print "The Target Registration Error is: "
   print TRE
   return TRE
+
+# homework for Feb 7, 2017
+def compareTRE_FRE():
+  for i in range(10,40, 5):
+    [alphaPoints, betaPoints, referenceToRas] = createTransformPoints(2.0, i)
+    alphaToBetaMatrix = computeRegistration(referenceToRas, alphaPoints, betaPoints)
+    average = avgDistAfterReg(i, alphaPoints, betaPoints, alphaToBetaMatrix)
+    TRE = computeTRE(alphaToBetaMatrix)
+
+
 
 
 

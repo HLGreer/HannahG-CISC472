@@ -3,6 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="a24a4415-b549-4071-b00b-d7a6d5de8cdc" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HannahG/HannahG.py" afterPath="$PROJECT_DIR$/HannahG/HannahG.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/SlicerScripts.py" afterPath="$PROJECT_DIR$/SlicerScripts.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -18,11 +19,11 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="HannahG.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="HannahG.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HannahG/HannahG.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="420">
-              <caret line="272" column="4" lean-forward="false" selection-start-line="272" selection-start-column="4" selection-end-line="279" selection-end-column="54" />
+            <state relative-caret-position="180">
+              <caret line="261" column="10" lean-forward="false" selection-start-line="261" selection-start-column="10" selection-end-line="261" selection-end-column="10" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -30,11 +31,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SlicerScripts.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="SlicerScripts.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/SlicerScripts.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-267">
-              <caret line="45" column="48" lean-forward="false" selection-start-line="45" selection-start-column="48" selection-end-line="45" selection-end-column="48" />
+            <state relative-caret-position="513">
+              <caret line="106" column="4" lean-forward="false" selection-start-line="106" selection-start-column="4" selection-end-line="106" selection-end-column="4" />
               <folding />
             </state>
           </provider>
@@ -56,8 +57,8 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/HannahG/SlicerScripts.py" />
-        <option value="$PROJECT_DIR$/HannahG/HannahG.py" />
         <option value="$PROJECT_DIR$/SlicerScripts.py" />
+        <option value="$PROJECT_DIR$/HannahG/HannahG.py" />
       </list>
     </option>
   </component>
@@ -411,7 +412,14 @@
       <option name="project" value="LOCAL" />
       <updated>1486005734802</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Converted previously existing code into defined functions.">
+      <created>1486436389161</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1486436389161</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -449,7 +457,8 @@
     <MESSAGE value="hkjh" />
     <MESSAGE value="rearranging things" />
     <MESSAGE value="Updated for Homework of Feb 2nd, 2017.&#10;Computing TRE." />
-    <option name="LAST_COMMIT_MESSAGE" value="Updated for Homework of Feb 2nd, 2017.&#10;Computing TRE." />
+    <MESSAGE value="Converted previously existing code into defined functions." />
+    <option name="LAST_COMMIT_MESSAGE" value="Converted previously existing code into defined functions." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
@@ -537,21 +546,21 @@
         <state />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HannahG/HannahG.py">
+    <entry file="file://$PROJECT_DIR$/SlicerScripts.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="420">
-          <caret line="272" column="4" lean-forward="false" selection-start-line="272" selection-start-column="4" selection-end-line="279" selection-end-column="54" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="513">
+          <caret line="106" column="4" lean-forward="false" selection-start-line="106" selection-start-column="4" selection-end-line="106" selection-end-column="4" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/SlicerScripts.py">
+    <entry file="file://$PROJECT_DIR$/HannahG/HannahG.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-267">
-          <caret line="45" column="48" lean-forward="false" selection-start-line="45" selection-start-column="48" selection-end-line="45" selection-end-column="48" />
-          <folding />
+        <state relative-caret-position="180">
+          <caret line="261" column="10" lean-forward="false" selection-start-line="261" selection-start-column="10" selection-end-line="261" selection-end-column="10" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

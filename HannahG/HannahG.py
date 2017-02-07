@@ -259,7 +259,7 @@ class HannahGTest(ScriptedLoadableModuleTest):
     Scale = 30.0
     numPerEdge = 3
     Sigma = 2.0 # radius of random error
-    N = 10
+    N = 20
 
     fromNormCoordinates = numpy.random.rand(N, 3) # An array of random numbers
     noise = numpy.random.normal(0.0, Sigma, N*3)
