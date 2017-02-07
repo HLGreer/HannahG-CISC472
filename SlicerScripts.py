@@ -42,7 +42,7 @@ def createTransformPoints(randErr, N):
     numFids = RASFids.AddFiducial(xx, yy, zz)
     numPoints = betaPoints.InsertNextPoint(xx, yy, zz)
 
-  return alphaPoints, betaPoints, referenceToRas
+  return [alphaPoints, betaPoints, referenceToRas]
 
 
 # Create landmark transform object that computes registration
