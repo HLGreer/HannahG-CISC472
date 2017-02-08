@@ -353,12 +353,13 @@ class HannahGTest(ScriptedLoadableModuleTest):
     # homework for Feb 7, 2017
     def compareTRE_FRE():
       for i in range(10, 40, 5):
+        print "Number of points used: " + str(i)
         [alphaPoints, betaPoints, referenceToRas] = createTransformPoints(2.0, i)
         alphaToBetaMatrix = computeRegistration(referenceToRas, alphaPoints, betaPoints)
         average = avgDistAfterReg(i, alphaPoints, betaPoints, alphaToBetaMatrix)
         TRE = computeTRE(alphaToBetaMatrix)
 
-
+    compareTRE_FRE()
 
 
 
