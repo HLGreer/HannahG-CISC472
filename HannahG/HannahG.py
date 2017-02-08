@@ -3,6 +3,7 @@ import unittest
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 import logging
+import math
 import numpy
 
 #
@@ -352,15 +353,54 @@ class HannahGTest(ScriptedLoadableModuleTest):
 
     # homework for Feb 7, 2017
     def compareTRE_FRE():
-      for i in range(10, 40, 5):
+      averages =[]
+      TREs = []
+      numPoints = range(10, 45, 5)
+      for i in range(10, 45, 5):
+        # This is 7 iterations
         print "Number of points used: " + str(i)
         [alphaPoints, betaPoints, referenceToRas] = createTransformPoints(2.0, i)
         alphaToBetaMatrix = computeRegistration(referenceToRas, alphaPoints, betaPoints)
         average = avgDistAfterReg(i, alphaPoints, betaPoints, alphaToBetaMatrix)
+        averages.append(average)
         TRE = computeTRE(alphaToBetaMatrix)
+        TREs.append(TRE)
+      lns = slicer.mrmlScene.GetNodesByClass('vtkMRMLLayoutNode')
+      lns.InitTraversal()
+      ln = lns.GetNextItemAsObject()
+      ln.SetViewArrangement(24)
+      # Get the Chart View Node
+      cvns = slicer.mrmlScene.GetNodesByClass('vtkMRMLChartViewNode')
+      cvns.InitTraversal()
+      cvn = cvns.GetNextItemAsObject()
+      # Create an Array Node and add some data
+      TRE_dn = slicer.mrmlScene.AddNode(slicer.vtkMRMLDoubleArrayNode())
+      arrayNode = TRE_dn.GetArray()
+      arrayNode.SetNumberOfTuples(7)
+      FRE_dn = slicer.mrmlScene.AddNode(slicer.vtkMRMLDoubleArrayNode())
+      arrayNode2 = FRE_dn.GetArray()
+      arrayNode2.SetNumberOfTuples(7)
+      for i in range(len(numPoints)):
+        arrayNode.SetComponent(i, 0, numPoints[i])
+        arrayNode.SetComponent(i, 1, TREs[i])
+        arrayNode.SetComponent(i, 2, 0)
+        arrayNode2.SetComponent(i, 0, numPoints[i])
+        arrayNode2.SetComponent(i, 1, averages[i])
+        arrayNode2.SetComponent(i, 2, 0)
+      # Create a Chart Node.
+      cn = slicer.mrmlScene.AddNode(slicer.vtkMRMLChartNode())
+      # Add the Array Nodes to the Chart. The first argument is a string used for the legend and to refer to the Array when setting properties.
+      cn.AddArray('TRE', TRE_dn.GetID())
+      cn.AddArray('FRE', FRE_dn.GetID())
+      # Set a few properties on the Chart. The first argument is a string identifying which Array to assign the property.
+      # 'default' is used to assign a property to the Chart itself (as opposed to an Array Node).
+      cn.SetProperty('default', 'title', 'TRE and FRE as a function of the number of points')
+      cn.SetProperty('default', 'xAxisLabel', 'Number of points')
+      cn.SetProperty('default', 'yAxisLabel', 'Unit Value')
+      # Tell the Chart View which Chart to display
+      cvn.SetChartNodeID(cn.GetID())
 
     compareTRE_FRE()
-
 
 
 
