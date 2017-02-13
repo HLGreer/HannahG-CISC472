@@ -37,6 +37,7 @@ class HannahG(ScriptedLoadableModule):
 class HannahGWidget(ScriptedLoadableModuleWidget):
   """Uses ScriptedLoadableModuleWidget base class, available at:
   https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
+  This section defines the left side bar and what happens with the buttons.
   """
 
   def setup(self):
@@ -47,6 +48,7 @@ class HannahGWidget(ScriptedLoadableModuleWidget):
     #
     # Parameters Area
     #
+
     parametersCollapsibleButton = ctk.ctkCollapsibleButton()
     parametersCollapsibleButton.text = "Parameters"
     self.layout.addWidget(parametersCollapsibleButton)
@@ -68,7 +70,7 @@ class HannahGWidget(ScriptedLoadableModuleWidget):
     self.inputSelector.setMRMLScene( slicer.mrmlScene )
     self.inputSelector.setToolTip( "Pick the input to the algorithm." )
     parametersFormLayout.addRow("Input Volume: ", self.inputSelector)
-
+    '''
     #
     # output volume selector
     #
@@ -102,7 +104,7 @@ class HannahGWidget(ScriptedLoadableModuleWidget):
     self.enableScreenshotsFlagCheckBox.checked = 0
     self.enableScreenshotsFlagCheckBox.setToolTip("If checked, take screen shots for tutorials. Use Save Data to write them to disk.")
     parametersFormLayout.addRow("Enable Screenshots", self.enableScreenshotsFlagCheckBox)
-
+    '''
     #
     # Apply Button
     #
@@ -113,9 +115,19 @@ class HannahGWidget(ScriptedLoadableModuleWidget):
 
     # connections
     self.applyButton.connect('clicked(bool)', self.onApplyButton)
+    '''
     self.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
     self.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.onSelect)
+    '''
+    self.emSelector = slicer.qMRMLNodeComboBox()
+    self.emSelector.nodeTypes = ['vtkMRMLLinearTransformNode']
+    self.emSelector.setMRMLScene(slicer.mrmlScene)
+    parametersFormLayout.addRow("EM tool tip transform: ", self.emSelector)
 
+    self.opticalSelector = slicer.qMRMLNodeComboBox()
+    self.opticalSelector.nodeTypes = ['vtkMRMLLinearTransformNode']
+    self.opticalSelector.setMRMLScene(slicer.mrmlScene)
+    parametersFormLayout.addRow("Optical tool tip transform: ", self.opticalSelector)
     # Add vertical spacer
     self.layout.addStretch(1)
 
@@ -129,10 +141,46 @@ class HannahGWidget(ScriptedLoadableModuleWidget):
     self.applyButton.enabled = self.inputSelector.currentNode() and self.outputSelector.currentNode()
 
   def onApplyButton(self):
+    emTipTransform = self.emSelector.currentNode()
+    if emTipTransform == None:
+      return
+    opTipTransform = self.opticalSelector.currentNode()
+    if opTipTransform == None:
+      return
+
+    emTipTransform.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
+    opTipTransform.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
+
+  def onTransformModified(self):
+    emTipTransform = self.emSelector.currentNode()
+    if emTipTransform == None:
+      return
+    opTipTransform = self.opticalSelector.currentNode()
+    if opTipTransform == None:
+      return
+
+    emTip_EmTip = [0, 0, 0, 1] # Origin in the center of each separate coordinate system
+    opTip_OpTip = [0, 0, 0, 1]
+
+    emTipToRasMatrix = vtk.vtkMatrix4x4() # Create a 4x4 Identity Matrix
+    emTipTransform.GetMatrixTransformToWorld(emTipToRasMatrix) # RAS is sometimes also called RAS in Slicer
+    emTip_Ras = numpy.array(emTipToRasMatrix.MultiplyFloatPoint(emTip_EmTip)) # Transformed point
+
+    opTipToRasMatrix = vtk.vtkMatrix4x4()
+    opTipTransform.GetMatrixTransformToWorld(opTipToRasMatrix)
+    opTip_Ras = numpy.array(opTipToRasMatrix.MultiplyFloatPoint(opTip_OpTip)) # Transformed point
+
+
+    distance = numpy.linalg.norm(emTip_Ras - opTip_Ras)
+    return distance
+
+
+    '''
     logic = HannahGLogic()
     enableScreenshotsFlag = self.enableScreenshotsFlagCheckBox.checked
     imageThreshold = self.imageThresholdSliderWidget.value
     logic.run(self.inputSelector.currentNode(), self.outputSelector.currentNode(), imageThreshold, enableScreenshotsFlag)
+    '''
 
 #
 # HannahGLogic
@@ -235,6 +283,151 @@ class HannahGLogic(ScriptedLoadableModuleLogic):
 
     return True
 
+  import numpy
+
+  def createTransformPoints(randErr, N):
+    Scale = 30.0
+    Sigma = randErr  # radius of random error
+
+    fromNormCoordinates = numpy.random.rand(N, 3)  # An array of random numbers
+    noise = numpy.random.normal(0.0, Sigma, N * 3)
+
+    # Homework for Jan 24:
+    referenceToRas = slicer.vtkMRMLLinearTransformNode()
+    slicer.mrmlScene.AddNode(referenceToRas)
+    referenceToRas.SetName('ReferenceToRas')
+
+    referenceFids = slicer.vtkMRMLMarkupsFiducialNode()
+    referenceFids.SetName('ReferenceFiducials')
+    slicer.mrmlScene.AddNode(referenceFids)
+    referenceFids.GetDisplayNode().SetSelectedColor(0, 0, 1)
+    RASFids = slicer.vtkMRMLMarkupsFiducialNode()
+    RASFids.SetName('RASFiducials')
+    slicer.mrmlScene.AddNode(RASFids)
+    RASFids.GetDisplayNode().SetSelectedColor(1, 1, 0)
+
+    alphaPoints = vtk.vtkPoints()
+    betaPoints = vtk.vtkPoints()
+    for i in range(N):
+      x = (fromNormCoordinates[i, 0] - 0.5) * Scale
+      y = (fromNormCoordinates[i, 1] - 0.5) * Scale
+      z = (fromNormCoordinates[i, 2] - 0.5) * Scale
+      numFids = referenceFids.AddFiducial(x, y, z)
+      numPoints = alphaPoints.InsertNextPoint(x, y, z)
+      xx = x + noise[i * 3]
+      yy = y + noise[i * 3 + 1]
+      zz = z + noise[i * 3 + 2]
+      numFids = RASFids.AddFiducial(xx, yy, zz)
+      numPoints = betaPoints.InsertNextPoint(xx, yy, zz)
+
+    return [alphaPoints, betaPoints, referenceToRas]
+
+  # Create landmark transform object that computes registration
+  def computeRegistration(referenceToRas, alphaPoints, betaPoints):
+    landmarkTransform = vtk.vtkLandmarkTransform()
+    landmarkTransform.SetSourceLandmarks(alphaPoints)
+    landmarkTransform.SetTargetLandmarks(betaPoints)
+    landmarkTransform.SetModeToRigidBody()
+    landmarkTransform.Update()
+
+    alphaToBetaMatrix = vtk.vtkMatrix4x4()
+    landmarkTransform.GetMatrix(alphaToBetaMatrix)
+
+    det = alphaToBetaMatrix.Determinant()
+    if det < 1e-8:
+      print 'Unstable registration. Check input for collinear points.'
+
+    referenceToRas.SetMatrixTransformToParent(alphaToBetaMatrix)
+    return alphaToBetaMatrix
+
+  # Compute average point distance after registration
+
+  def avgDistAfterReg(N, alphaPoints, betaPoints, alphaToBetaMatrix):
+    average = 0.0
+    numbersSoFar = 0
+    for i in range(N):
+      numbersSoFar = numbersSoFar + 1
+      a = alphaPoints.GetPoint(i)
+      pointA_Alpha = numpy.array(a)
+      pointA_Alpha = numpy.append(pointA_Alpha, 1)
+      pointA_Beta = alphaToBetaMatrix.MultiplyFloatPoint(pointA_Alpha)
+      b = betaPoints.GetPoint(i)
+      pointB_Beta = numpy.array(b)
+      pointB_Beta = numpy.append(pointB_Beta, 1)
+      distance = numpy.linalg.norm(pointA_Beta - pointB_Beta)
+      average = average + (distance - average) / numbersSoFar
+
+    print "Average distance after registration: " + str(average)
+    return average
+
+
+    # For Feb 2nd:
+
+    # Compute Target Registration Error:
+    # Target registration error (TRE), which is the distance, after registration,
+    # between a pair of corresponding points which are not used in registration.
+    # (From http://www.cse.yorku.ca/~burton/publications/A%20theoretical%20comparison%20of%20different%20target%20registration%20error%20estimators.pdf)
+
+    # Transform the point (0,0,0) with the transform and return the distance between the original and the transformed
+    # point as the TRE
+
+  def computeTRE(alphaToBetaMatrix):
+    targetPoint = numpy.array((0, 0, 0, 1))
+    transformedTarget = alphaToBetaMatrix.MultiplyFloatPoint(targetPoint)
+    TRE = numpy.linalg.norm(transformedTarget - targetPoint)
+    print "The Target Registration Error is: "
+    print TRE
+    return TRE
+
+  # homework for Feb 7, 2017
+  def compareTRE_FRE():
+    averages = []
+    TREs = []
+    numPoints = range(10, 45, 5)
+    for i in range(10, 45, 5):
+      # This is 7 iterations
+      print "Number of points used: " + str(i)
+      [alphaPoints, betaPoints, referenceToRas] = createTransformPoints(2.0, i)
+      alphaToBetaMatrix = computeRegistration(referenceToRas, alphaPoints, betaPoints)
+      average = avgDistAfterReg(i, alphaPoints, betaPoints, alphaToBetaMatrix)
+      averages.append(average)
+      TRE = computeTRE(alphaToBetaMatrix)
+      TREs.append(TRE)
+    lns = slicer.mrmlScene.GetNodesByClass('vtkMRMLLayoutNode')
+    lns.InitTraversal()
+    ln = lns.GetNextItemAsObject()
+    ln.SetViewArrangement(24)
+    # Get the Chart View Node
+    cvns = slicer.mrmlScene.GetNodesByClass('vtkMRMLChartViewNode')
+    cvns.InitTraversal()
+    cvn = cvns.GetNextItemAsObject()
+    # Create an Array Node and add some data
+    TRE_dn = slicer.mrmlScene.AddNode(slicer.vtkMRMLDoubleArrayNode())
+    arrayNode = TRE_dn.GetArray()
+    arrayNode.SetNumberOfTuples(7)
+    FRE_dn = slicer.mrmlScene.AddNode(slicer.vtkMRMLDoubleArrayNode())
+    arrayNode2 = FRE_dn.GetArray()
+    arrayNode2.SetNumberOfTuples(7)
+    for i in range(len(numPoints)):
+      arrayNode.SetComponent(i, 0, numPoints[i])
+      arrayNode.SetComponent(i, 1, TREs[i])
+      arrayNode.SetComponent(i, 2, 0)
+      arrayNode2.SetComponent(i, 0, numPoints[i])
+      arrayNode2.SetComponent(i, 1, averages[i])
+      arrayNode2.SetComponent(i, 2, 0)
+    # Create a Chart Node.
+    cn = slicer.mrmlScene.AddNode(slicer.vtkMRMLChartNode())
+    # Add the Array Nodes to the Chart. The first argument is a string used for the legend and to refer to the Array when setting properties.
+    cn.AddArray('TRE', TRE_dn.GetID())
+    cn.AddArray('FRE', FRE_dn.GetID())
+    # Set a few properties on the Chart. The first argument is a string identifying which Array to assign the property.
+    # 'default' is used to assign a property to the Chart itself (as opposed to an Array Node).
+    cn.SetProperty('default', 'title', 'TRE and FRE as a function of the number of points')
+    cn.SetProperty('default', 'xAxisLabel', 'Number of points')
+    cn.SetProperty('default', 'yAxisLabel', 'Unit Value')
+    # Tell the Chart View which Chart to display
+    cvn.SetChartNodeID(cn.GetID())
+
 
 class HannahGTest(ScriptedLoadableModuleTest):
   """
@@ -255,158 +448,5 @@ class HannahGTest(ScriptedLoadableModuleTest):
     self.test_HannahG1()
 
   def test_HannahG1(self):
-    import numpy
-
-    def createTransformPoints(randErr, N):
-      Scale = 30.0
-      Sigma = randErr  # radius of random error
-
-      fromNormCoordinates = numpy.random.rand(N, 3)  # An array of random numbers
-      noise = numpy.random.normal(0.0, Sigma, N * 3)
-
-      # Homework for Jan 24:
-      referenceToRas = slicer.vtkMRMLLinearTransformNode()
-      slicer.mrmlScene.AddNode(referenceToRas)
-      referenceToRas.SetName('ReferenceToRas')
-
-      referenceFids = slicer.vtkMRMLMarkupsFiducialNode()
-      referenceFids.SetName('ReferenceFiducials')
-      slicer.mrmlScene.AddNode(referenceFids)
-      referenceFids.GetDisplayNode().SetSelectedColor(0, 0, 1)
-      RASFids = slicer.vtkMRMLMarkupsFiducialNode()
-      RASFids.SetName('RASFiducials')
-      slicer.mrmlScene.AddNode(RASFids)
-      RASFids.GetDisplayNode().SetSelectedColor(1, 1, 0)
-
-      alphaPoints = vtk.vtkPoints()
-      betaPoints = vtk.vtkPoints()
-      for i in range(N):
-        x = (fromNormCoordinates[i, 0] - 0.5) * Scale
-        y = (fromNormCoordinates[i, 1] - 0.5) * Scale
-        z = (fromNormCoordinates[i, 2] - 0.5) * Scale
-        numFids = referenceFids.AddFiducial(x, y, z)
-        numPoints = alphaPoints.InsertNextPoint(x, y, z)
-        xx = x + noise[i * 3]
-        yy = y + noise[i * 3 + 1]
-        zz = z + noise[i * 3 + 2]
-        numFids = RASFids.AddFiducial(xx, yy, zz)
-        numPoints = betaPoints.InsertNextPoint(xx, yy, zz)
-
-      return [alphaPoints, betaPoints, referenceToRas]
-
-    # Create landmark transform object that computes registration
-    def computeRegistration(referenceToRas, alphaPoints, betaPoints):
-      landmarkTransform = vtk.vtkLandmarkTransform()
-      landmarkTransform.SetSourceLandmarks(alphaPoints)
-      landmarkTransform.SetTargetLandmarks(betaPoints)
-      landmarkTransform.SetModeToRigidBody()
-      landmarkTransform.Update()
-
-      alphaToBetaMatrix = vtk.vtkMatrix4x4()
-      landmarkTransform.GetMatrix(alphaToBetaMatrix)
-
-      det = alphaToBetaMatrix.Determinant()
-      if det < 1e-8:
-        print 'Unstable registration. Check input for collinear points.'
-
-      referenceToRas.SetMatrixTransformToParent(alphaToBetaMatrix)
-      return alphaToBetaMatrix
-
-    # Compute average point distance after registration
-
-    def avgDistAfterReg(N, alphaPoints, betaPoints, alphaToBetaMatrix):
-      average = 0.0
-      numbersSoFar = 0
-      for i in range(N):
-        numbersSoFar = numbersSoFar + 1
-        a = alphaPoints.GetPoint(i)
-        pointA_Alpha = numpy.array(a)
-        pointA_Alpha = numpy.append(pointA_Alpha, 1)
-        pointA_Beta = alphaToBetaMatrix.MultiplyFloatPoint(pointA_Alpha)
-        b = betaPoints.GetPoint(i)
-        pointB_Beta = numpy.array(b)
-        pointB_Beta = numpy.append(pointB_Beta, 1)
-        distance = numpy.linalg.norm(pointA_Beta - pointB_Beta)
-        average = average + (distance - average) / numbersSoFar
-
-      print "Average distance after registration: " + str(average)
-      return average
-
-
-      # For Feb 2nd:
-
-      # Compute Target Registration Error:
-      # Target registration error (TRE), which is the distance, after registration,
-      # between a pair of corresponding points which are not used in registration.
-      # (From http://www.cse.yorku.ca/~burton/publications/A%20theoretical%20comparison%20of%20different%20target%20registration%20error%20estimators.pdf)
-
-      # Transform the point (0,0,0) with the transform and return the distance between the original and the transformed
-      # point as the TRE
-
-    def computeTRE(alphaToBetaMatrix):
-      targetPoint = numpy.array((0, 0, 0, 1))
-      transformedTarget = alphaToBetaMatrix.MultiplyFloatPoint(targetPoint)
-      TRE = numpy.linalg.norm(transformedTarget - targetPoint)
-      print "The Target Registration Error is: "
-      print TRE
-      return TRE
-
-    # homework for Feb 7, 2017
-    def compareTRE_FRE():
-      averages =[]
-      TREs = []
-      numPoints = range(10, 45, 5)
-      for i in range(10, 45, 5):
-        # This is 7 iterations
-        print "Number of points used: " + str(i)
-        [alphaPoints, betaPoints, referenceToRas] = createTransformPoints(2.0, i)
-        alphaToBetaMatrix = computeRegistration(referenceToRas, alphaPoints, betaPoints)
-        average = avgDistAfterReg(i, alphaPoints, betaPoints, alphaToBetaMatrix)
-        averages.append(average)
-        TRE = computeTRE(alphaToBetaMatrix)
-        TREs.append(TRE)
-      lns = slicer.mrmlScene.GetNodesByClass('vtkMRMLLayoutNode')
-      lns.InitTraversal()
-      ln = lns.GetNextItemAsObject()
-      ln.SetViewArrangement(24)
-      # Get the Chart View Node
-      cvns = slicer.mrmlScene.GetNodesByClass('vtkMRMLChartViewNode')
-      cvns.InitTraversal()
-      cvn = cvns.GetNextItemAsObject()
-      # Create an Array Node and add some data
-      TRE_dn = slicer.mrmlScene.AddNode(slicer.vtkMRMLDoubleArrayNode())
-      arrayNode = TRE_dn.GetArray()
-      arrayNode.SetNumberOfTuples(7)
-      FRE_dn = slicer.mrmlScene.AddNode(slicer.vtkMRMLDoubleArrayNode())
-      arrayNode2 = FRE_dn.GetArray()
-      arrayNode2.SetNumberOfTuples(7)
-      for i in range(len(numPoints)):
-        arrayNode.SetComponent(i, 0, numPoints[i])
-        arrayNode.SetComponent(i, 1, TREs[i])
-        arrayNode.SetComponent(i, 2, 0)
-        arrayNode2.SetComponent(i, 0, numPoints[i])
-        arrayNode2.SetComponent(i, 1, averages[i])
-        arrayNode2.SetComponent(i, 2, 0)
-      # Create a Chart Node.
-      cn = slicer.mrmlScene.AddNode(slicer.vtkMRMLChartNode())
-      # Add the Array Nodes to the Chart. The first argument is a string used for the legend and to refer to the Array when setting properties.
-      cn.AddArray('TRE', TRE_dn.GetID())
-      cn.AddArray('FRE', FRE_dn.GetID())
-      # Set a few properties on the Chart. The first argument is a string identifying which Array to assign the property.
-      # 'default' is used to assign a property to the Chart itself (as opposed to an Array Node).
-      cn.SetProperty('default', 'title', 'TRE and FRE as a function of the number of points')
-      cn.SetProperty('default', 'xAxisLabel', 'Number of points')
-      cn.SetProperty('default', 'yAxisLabel', 'Unit Value')
-      # Tell the Chart View which Chart to display
-      cvn.SetChartNodeID(cn.GetID())
-
-    compareTRE_FRE()
-
-
-
-
-
-
-
-
-
+    pass
+    #compareTRE_FRE()
