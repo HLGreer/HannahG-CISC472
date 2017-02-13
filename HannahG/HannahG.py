@@ -70,7 +70,7 @@ class HannahGWidget(ScriptedLoadableModuleWidget):
     self.inputSelector.setMRMLScene( slicer.mrmlScene )
     self.inputSelector.setToolTip( "Pick the input to the algorithm." )
     parametersFormLayout.addRow("Input Volume: ", self.inputSelector)
-    '''
+
     #
     # output volume selector
     #
@@ -89,6 +89,7 @@ class HannahGWidget(ScriptedLoadableModuleWidget):
     #
     # threshold value
     #
+    '''
     self.imageThresholdSliderWidget = ctk.ctkSliderWidget()
     self.imageThresholdSliderWidget.singleStep = 0.1
     self.imageThresholdSliderWidget.minimum = -100
@@ -429,24 +430,28 @@ class HannahGLogic(ScriptedLoadableModuleLogic):
     cvn.SetChartNodeID(cn.GetID())
 
 
-class HannahGTest(ScriptedLoadableModuleTest):
-  """
-  This is the test case for your scripted module.
-  Uses ScriptedLoadableModuleTest base class, available at:
-  https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
-  """
-
-  def setUp(self):
-    """ Do whatever is needed to reset the state - typically a scene clear will be enough.
+if __name__ == '__main__':
+  class HannahGTest(ScriptedLoadableModuleTest):
     """
-    slicer.mrmlScene.Clear(0)
-
-  def runTest(self):
-    """Run as few or as many tests as needed here.
+    This is the test case for your scripted module.
+    Uses ScriptedLoadableModuleTest base class, available at:
+    https://github.com/Slicer/Slicer/blob/master/Base/Python/slicer/ScriptedLoadableModule.py
     """
-    self.setUp()
-    self.test_HannahG1()
 
-  def test_HannahG1(self):
-    pass
-    #compareTRE_FRE()
+    def setUp(self):
+      """ Do whatever is needed to reset the state - typically a scene clear will be enough.
+      """
+      slicer.mrmlScene.Clear(0)
+
+    def runTest(self):
+      """Run as few or as many tests as needed here.
+      """
+      self.setUp()
+      self.test_HannahG1()
+
+    def test_HannahG1(self):
+      #compareTRE_FRE()
+      # do I need anything here still?
+      # All the work is done in the widget class at the moment.
+      pass
+
