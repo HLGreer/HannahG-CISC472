@@ -149,7 +149,7 @@ class HannahGWidget(ScriptedLoadableModuleWidget):
     if opTipTransform == None:
       return
 
-    emTipTransform.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
+    emTipTransform.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified) # This should update the value anytime it changes.
     opTipTransform.AddObserver(slicer.vtkMRMLTransformNode.TransformModifiedEvent, self.onTransformModified)
 
   def onTransformModified(self):
@@ -173,6 +173,7 @@ class HannahGWidget(ScriptedLoadableModuleWidget):
 
 
     distance = numpy.linalg.norm(emTip_Ras - opTip_Ras)
+    print str(distance)
     return distance
 
 
@@ -453,5 +454,9 @@ if __name__ == '__main__':
       #compareTRE_FRE()
       # do I need anything here still?
       # All the work is done in the widget class at the moment.
+      # run the module:
+      #testDistance = getattr(HannahGWidget, onTransformModified)
       pass
+
+
 
